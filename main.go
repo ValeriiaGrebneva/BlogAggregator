@@ -8,18 +8,20 @@ import (
 func main() {
 	configStruct, err := config.Read()
 	if err != nil {
-		fmt.Println("Reading didn't work")
+		fmt.Println(err)
 	}
 
 	err = configStruct.SetUser("Valeriia")
 	if err != nil {
-		fmt.Println("User wasn't set")
+		fmt.Println(err)
 	}
 
 	configStruct, err = config.Read()
 	if err != nil {
-		fmt.Println("Reading again didn't work")
+		fmt.Println(err)
 	}
+
+	fmt.Println(configStruct)
 
 	return
 }
