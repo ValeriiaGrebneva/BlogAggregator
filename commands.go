@@ -7,7 +7,8 @@ import (
 )
 
 type state struct {
-	statePointer *config.Config
+	db  *database.Queries
+	cfg *config.Config
 }
 
 type command struct {
@@ -45,7 +46,7 @@ func handlerLogin(s *state, cmd command) error {
 
 	user := cmd.argumentsCommand[0]
 
-	err := s.statePointer.SetUser(user)
+	err := s.cfg.SetUser(user)
 	if err != nil {
 		return err
 	}
@@ -54,3 +55,23 @@ func handlerLogin(s *state, cmd command) error {
 
 	return nil
 }
+
+/* in progress
+func handlerRegister(s *state, cmd command) error {
+	lengthCommands := len(cmd.argumentsCommand)
+	if lengthCommands != 1 {
+		return fmt.Errorf("Supposed to have 1 argument (username) in login command, not %d arguments", lengthCommands)
+	}
+
+	user := cmd.argumentsCommand[0]
+
+	err := s.cfg.SetUser(user)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("The user '%s' has been set\n", user)
+
+	return nil
+}
+*/

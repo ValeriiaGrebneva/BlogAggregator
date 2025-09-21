@@ -1,5 +1,7 @@
 package main
 
+import _ "github.com/lib/pq"
+
 import (
 	"fmt"
 	"os"
@@ -13,8 +15,12 @@ func main() {
 		fmt.Println(err)
 	}
 
+	db, err := sql.Open("postgres", configStruct.Connection)
+	dbQueries := database.New(db)
+
 	stateConfig := state{
-		statePointer: &configStruct,
+		cfg: &configStruct,
+		db: &dbQueries
 	}
 
 	var args = os.Args
@@ -33,6 +39,7 @@ func main() {
 	}
 
 	commandsStruct.register(commandLogin.nameCommand, handlerLogin)
+	//commandsStruct.register(commandRegister.nameCommand, handlerRegister)
 
 	err = commandsStruct.run(&stateConfig, commandLogin)
 	if err != nil {
