@@ -1,0 +1,5 @@
+From root:
+    psql postgres://postgres:postgres@localhost:5432/gator
+
+    goose postgres postgres://postgres:postgres@localhost:5432/gator <up or down>
+    goose -dir sql/schema postgres postgres://postgres:postgres@localhost:5432/gator <up or down>

@@ -21,16 +21,16 @@ func Read() (Config, error) {
 
 	data, err := os.ReadFile(link)
 	if err != nil {
-        return Config{}, err
+		return Config{}, err
 	}
 
 	var configStruct Config
 
 	if err := json.Unmarshal(data, &configStruct); err != nil {
-        return Config{}, err
-    }
+		return Config{}, err
+	}
 
-    return configStruct, nil
+	return configStruct, nil
 }
 
 func (configStruct *Config) SetUser(current_user_name string) error {
@@ -46,7 +46,7 @@ func (configStruct *Config) SetUser(current_user_name string) error {
 	}
 	link := homeDir + "/" + string(configFileName)
 
-	err = os.WriteFile(link, jsonStruct, 0600) 
+	err = os.WriteFile(link, jsonStruct, 0600)
 	if err != nil {
 		return err
 	}

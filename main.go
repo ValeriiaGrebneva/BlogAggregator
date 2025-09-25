@@ -3,10 +3,12 @@ package main
 import _ "github.com/lib/pq"
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 
 	"github.com/ValeriiaGrebneva/BlogAggregator/internal/config"
+	"github.com/ValeriiaGrebneva/BlogAggregator/internal/database"
 )
 
 func main() {
@@ -20,8 +22,17 @@ func main() {
 
 	stateConfig := state{
 		cfg: &configStruct,
-		db: &dbQueries
+		db:  dbQueries,
 	}
+
+	commandsStruct := commands{
+		mapCommands: make(map[string]func(*state, command) error),
+	}
+
+	commandsStruct.register("login", handlerLogin)
+	commandsStruct.register("register", handlerRegister)
+	commandsStruct.register("reset", handlerReset)
+	commandsStruct.register("users", handlerUsers)
 
 	var args = os.Args
 	if len(args) < 2 {
@@ -29,30 +40,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	var commandLogin = command{
-		nameCommand:      args[1],
-		argumentsCommand: args[2:],
-	}
-
-	commandsStruct := commands{
-		mapCommands: make(map[string]func(*state, command) error),
-	}
-
-	commandsStruct.register(commandLogin.nameCommand, handlerLogin)
-	//commandsStruct.register(commandRegister.nameCommand, handlerRegister)
-
-	err = commandsStruct.run(&stateConfig, commandLogin)
+	err = commandsStruct.run(&stateConfig, command{args[1], args[2:]})
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
-	configStruct, err = config.Read()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println(configStruct)
 
 	return
 }
