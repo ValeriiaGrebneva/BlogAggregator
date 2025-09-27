@@ -138,3 +138,7 @@ func handlerUsers(s *state, cmd command) error {
 
 	return nil
 }
+
+func handlerAggregator(s *state, cmd command) error {
+
+}
