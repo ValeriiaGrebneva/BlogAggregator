@@ -33,6 +33,7 @@ func main() {
 	commandsStruct.register("register", handlerRegister)
 	commandsStruct.register("reset", handlerReset)
 	commandsStruct.register("users", handlerUsers)
+	commandsStruct.register("agg", handlerAggregator)
 
 	var args = os.Args
 	if len(args) < 2 {

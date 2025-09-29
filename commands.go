@@ -140,5 +140,17 @@ func handlerUsers(s *state, cmd command) error {
 }
 
 func handlerAggregator(s *state, cmd command) error {
+	lengthCommands := len(cmd.argumentsCommand)
+	if lengthCommands != 0 {
+		return fmt.Errorf("Supposed to have 0 arguments in users command, not %d arguments", lengthCommands)
+	}
 
+	linkURL := "https://www.wagslane.dev/index.xml"
+
+	feedRSS, err := fetchFeed(context.Background(), linkURL)
+	if err != nil {
+		return err
+	}
+	fmt.Println(feedRSS)
+	return nil
 }
