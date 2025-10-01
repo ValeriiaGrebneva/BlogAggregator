@@ -154,3 +154,31 @@ func handlerAggregator(s *state, cmd command) error {
 	fmt.Println(feedRSS)
 	return nil
 }
+
+func handlerAddFeed(s *state, cmd command) error {
+	lengthCommands := len(cmd.argumentsCommand)
+	if lengthCommands != 2 {
+		return fmt.Errorf("Supposed to have 2 arguments in users command, not %d arguments", lengthCommands)
+	}
+
+	configStruct, err := config.Read()
+	if err != nil {
+		fmt.Println(err)
+	}
+	user, err := s.db.GetUser(context.Background(), configStruct.Username)
+	if err != nil {
+		fmt.Printf("The user '%s' doesn't exist\n", configStruct.Username)
+		os.Exit(1)
+	}
+
+	name := cmd.argumentsCommand[0]
+	url := cmd.argumentsCommand[1]
+
+	feedData, err := s.db.CreateFeed(context.Background(), database.CreateFeedParams{uuid.New(), time.Now(), time.Now(), name, url, user.ID})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(feedData)
+	return nil
+}
