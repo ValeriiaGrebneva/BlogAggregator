@@ -182,3 +182,29 @@ func handlerAddFeed(s *state, cmd command) error {
 	fmt.Println(feedData)
 	return nil
 }
+
+func handlerListFeeds(s *state, cmd command) error {
+	lengthCommands := len(cmd.argumentsCommand)
+	if lengthCommands != 0 {
+		return fmt.Errorf("Supposed to have 0 arguments in users command, not %d arguments", lengthCommands)
+	}
+
+	feedsSlice, err := s.db.GetFeeds(context.Background())
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	for _, f := range feedsSlice {
+		fmt.Printf("Name: %s\n", f.Name)
+		fmt.Printf("URL: %s\n", f.Url)
+		name, err := s.db.GetUserName(context.Background(), f.UserID)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("User: %s\n", name)
+	}
+
+	return nil
+}
