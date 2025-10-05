@@ -208,3 +208,32 @@ func handlerListFeeds(s *state, cmd command) error {
 
 	return nil
 }
+
+func handlerFollow(s *state, cmd command) error {
+	lengthCommands := len(cmd.argumentsCommand)
+	if lengthCommands != 1 {
+		return fmt.Errorf("Supposed to have 1 arguments in users command, not %d arguments", lengthCommands)
+	}
+
+	url := cmd.argumentsCommand[0]
+	feed, err := s.db.GetFeed(context.Background(), url)
+	if err != nil {
+		fmt.Printf("The feed '%s' doesn't exist\n", url)
+		os.Exit(1)
+	}
+
+	user, err := s.db.GetUser(context.Background(), configStruct.Username)
+	if err != nil {
+		fmt.Printf("The user '%s' doesn't exist\n", configStruct.Username)
+		os.Exit(1)
+	}
+
+	feedFollowData, err := s.db.CreateFeedFollow(context.Background(), database.CreateFeedFollowParams{uuid.New(), time.Now(), time.Now(), name, feed.ID, user.ID})
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Feed: %s\n", feedFollowData.FeedName)
+	fmt.Printf("Name: %s\n", feedFollowData.Username)
+	return nil
+}

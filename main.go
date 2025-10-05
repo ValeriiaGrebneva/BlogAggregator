@@ -36,6 +36,7 @@ func main() {
 	commandsStruct.register("agg", handlerAggregator)
 	commandsStruct.register("addfeed", handlerAddFeed)
 	commandsStruct.register("feeds", handlerListFeeds)
+	commandsStruct.register("follow", handlerFollow)
 
 	var args = os.Args
 	if len(args) < 2 {
