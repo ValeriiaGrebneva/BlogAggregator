@@ -70,7 +70,7 @@ func handlerLogin(s *state, cmd command) error {
 func handlerRegister(s *state, cmd command) error {
 	lengthCommands := len(cmd.argumentsCommand)
 	if lengthCommands != 1 {
-		return fmt.Errorf("Supposed to have 1 argument (username) in register command, not %d arguments", lengthCommands)
+		return fmt.Errorf("Supposed to have 1 argument (username) in Register command, not %d arguments", lengthCommands)
 	}
 
 	user := cmd.argumentsCommand[0]
@@ -99,7 +99,7 @@ func handlerRegister(s *state, cmd command) error {
 func handlerReset(s *state, cmd command) error {
 	lengthCommands := len(cmd.argumentsCommand)
 	if lengthCommands != 0 {
-		return fmt.Errorf("Supposed to have 0 arguments in reset command, not %d arguments", lengthCommands)
+		return fmt.Errorf("Supposed to have 0 arguments in Reset command, not %d arguments", lengthCommands)
 	}
 
 	err := s.db.ResetUsers(context.Background())
@@ -114,7 +114,7 @@ func handlerReset(s *state, cmd command) error {
 func handlerUsers(s *state, cmd command) error {
 	lengthCommands := len(cmd.argumentsCommand)
 	if lengthCommands != 0 {
-		return fmt.Errorf("Supposed to have 0 arguments in users command, not %d arguments", lengthCommands)
+		return fmt.Errorf("Supposed to have 0 arguments in Users command, not %d arguments", lengthCommands)
 	}
 
 	usersSlice, err := s.db.GetUsers(context.Background())
@@ -123,13 +123,8 @@ func handlerUsers(s *state, cmd command) error {
 		os.Exit(1)
 	}
 
-	configStruct, err := config.Read()
-	if err != nil {
-		fmt.Println(err)
-	}
-
 	for _, u := range usersSlice {
-		if u.Name == configStruct.Username {
+		if u.Name == s.cfg.Username {
 			fmt.Printf("* %s (current)\n", u.Name)
 		} else {
 			fmt.Printf("* %s\n", u.Name)
@@ -142,7 +137,7 @@ func handlerUsers(s *state, cmd command) error {
 func handlerAggregator(s *state, cmd command) error {
 	lengthCommands := len(cmd.argumentsCommand)
 	if lengthCommands != 0 {
-		return fmt.Errorf("Supposed to have 0 arguments in users command, not %d arguments", lengthCommands)
+		return fmt.Errorf("Supposed to have 0 arguments in Aggregator command, not %d arguments", lengthCommands)
 	}
 
 	linkURL := "https://www.wagslane.dev/index.xml"
@@ -158,16 +153,12 @@ func handlerAggregator(s *state, cmd command) error {
 func handlerAddFeed(s *state, cmd command) error {
 	lengthCommands := len(cmd.argumentsCommand)
 	if lengthCommands != 2 {
-		return fmt.Errorf("Supposed to have 2 arguments in users command, not %d arguments", lengthCommands)
+		return fmt.Errorf("Supposed to have 2 arguments (FeedName, URL) in AddFeeds command, not %d arguments", lengthCommands)
 	}
 
-	configStruct, err := config.Read()
+	user, err := s.db.GetUser(context.Background(), s.cfg.Username)
 	if err != nil {
-		fmt.Println(err)
-	}
-	user, err := s.db.GetUser(context.Background(), configStruct.Username)
-	if err != nil {
-		fmt.Printf("The user '%s' doesn't exist\n", configStruct.Username)
+		fmt.Printf("The user '%s' doesn't exist\n", s.cfg.Username)
 		os.Exit(1)
 	}
 
@@ -179,6 +170,11 @@ func handlerAddFeed(s *state, cmd command) error {
 		return err
 	}
 
+	_, err = s.db.CreateFeedFollow(context.Background(), database.CreateFeedFollowParams{uuid.New(), time.Now(), time.Now(), user.ID, feedData.ID})
+	if err != nil {
+		return err
+	}
+
 	fmt.Println(feedData)
 	return nil
 }
@@ -186,7 +182,7 @@ func handlerAddFeed(s *state, cmd command) error {
 func handlerListFeeds(s *state, cmd command) error {
 	lengthCommands := len(cmd.argumentsCommand)
 	if lengthCommands != 0 {
-		return fmt.Errorf("Supposed to have 0 arguments in users command, not %d arguments", lengthCommands)
+		return fmt.Errorf("Supposed to have 0 arguments in ListFeeds command, not %d arguments", lengthCommands)
 	}
 
 	feedsSlice, err := s.db.GetFeeds(context.Background())
@@ -212,7 +208,7 @@ func handlerListFeeds(s *state, cmd command) error {
 func handlerFollow(s *state, cmd command) error {
 	lengthCommands := len(cmd.argumentsCommand)
 	if lengthCommands != 1 {
-		return fmt.Errorf("Supposed to have 1 arguments in users command, not %d arguments", lengthCommands)
+		return fmt.Errorf("Supposed to have 1 argument (URL) in Follow command, not %d arguments", lengthCommands)
 	}
 
 	url := cmd.argumentsCommand[0]
@@ -222,18 +218,39 @@ func handlerFollow(s *state, cmd command) error {
 		os.Exit(1)
 	}
 
-	user, err := s.db.GetUser(context.Background(), configStruct.Username)
+	user, err := s.db.GetUser(context.Background(), s.cfg.Username)
 	if err != nil {
-		fmt.Printf("The user '%s' doesn't exist\n", configStruct.Username)
+		fmt.Printf("The user '%s' doesn't exist\n", s.cfg.Username)
 		os.Exit(1)
 	}
 
-	feedFollowData, err := s.db.CreateFeedFollow(context.Background(), database.CreateFeedFollowParams{uuid.New(), time.Now(), time.Now(), name, feed.ID, user.ID})
+	feedFollowData, err := s.db.CreateFeedFollow(context.Background(), database.CreateFeedFollowParams{uuid.New(), time.Now(), time.Now(), user.ID, feed.ID})
 	if err != nil {
 		return err
 	}
 
 	fmt.Printf("Feed: %s\n", feedFollowData.FeedName)
-	fmt.Printf("Name: %s\n", feedFollowData.Username)
+	fmt.Printf("Name: %s\n", feedFollowData.UserName)
+	return nil
+}
+
+func handlerFollowing(s *state, cmd command) error {
+	lengthCommands := len(cmd.argumentsCommand)
+	if lengthCommands != 0 {
+		return fmt.Errorf("Supposed to have 0 arguments in Following command, not %d arguments", lengthCommands)
+	}
+
+	user, err := s.db.GetUser(context.Background(), s.cfg.Username)
+	if err != nil {
+		fmt.Printf("The user '%s' doesn't exist\n", s.cfg.Username)
+		os.Exit(1)
+	}
+
+	feedFollowDataSlice, err := s.db.GetFeedFollowsForUser(context.Background(), user.ID)
+
+	for _, f := range feedFollowDataSlice {
+		fmt.Printf("* %s\n", f.FeedName)
+	}
+
 	return nil
 }
