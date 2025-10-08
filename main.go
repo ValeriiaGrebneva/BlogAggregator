@@ -34,10 +34,10 @@ func main() {
 	commandsStruct.register("reset", handlerReset)
 	commandsStruct.register("users", handlerUsers)
 	commandsStruct.register("agg", handlerAggregator)
-	commandsStruct.register("addfeed", handlerAddFeed)
+	commandsStruct.register("addfeed", middlewareLoggedIn(handlerAddFeed))
 	commandsStruct.register("feeds", handlerListFeeds)
-	commandsStruct.register("follow", handlerFollow)
-	commandsStruct.register("following", handlerFollowing)
+	commandsStruct.register("follow", middlewareLoggedIn(handlerFollow))
+	commandsStruct.register("following", middlewareLoggedIn(handlerFollowing))
 
 	var args = os.Args
 	if len(args) < 2 {
