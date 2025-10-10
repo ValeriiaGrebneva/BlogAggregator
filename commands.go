@@ -250,3 +250,24 @@ func middlewareLoggedIn(handler func(s *state, cmd command, user database.User) 
 		return handler(s, cmd, user)
 	}
 }
+
+func handlerUnfollow(s *state, cmd command, user database.User) error {
+	lengthCommands := len(cmd.argumentsCommand)
+	if lengthCommands != 1 {
+		return fmt.Errorf("Supposed to have 1 argument (URL) in Unfollow command, not %d arguments", lengthCommands)
+	}
+
+	url := cmd.argumentsCommand[0]
+	feed, err := s.db.GetFeed(context.Background(), url)
+	if err != nil {
+		fmt.Printf("The feed '%s' doesn't exist\n", url)
+		os.Exit(1)
+	}
+
+	err = s.db.DeleteFeedFollow(context.Background(), database.DeleteFeedFollowParams{user.ID, feed.ID})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
