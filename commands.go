@@ -136,17 +136,45 @@ func handlerUsers(s *state, cmd command) error {
 
 func handlerAggregator(s *state, cmd command) error {
 	lengthCommands := len(cmd.argumentsCommand)
-	if lengthCommands != 0 {
-		return fmt.Errorf("Supposed to have 0 arguments in Aggregator command, not %d arguments", lengthCommands)
+	if lengthCommands != 1 {
+		return fmt.Errorf("Supposed to have 1 argument (time between requests) in Aggregator command, not %d arguments", lengthCommands)
 	}
 
-	linkURL := "https://www.wagslane.dev/index.xml"
+	timeReq := cmd.argumentsCommand[0]
+	fmt.Printf("Collecting feeds every %s\n", timeReq)
+	timeBetweenRequests, _ := time.ParseDuration(timeReq)
 
-	feedRSS, err := fetchFeed(context.Background(), linkURL)
+	ticker := time.NewTicker(timeBetweenRequests)
+	for ; ; <-ticker.C {
+		err := scrapeFeeds(s)
+		if err != nil {
+			return err
+		}
+	}
+	
+	return nil
+}
+
+func scrapeFeeds(s *state) error {
+	feedData, err := s.db.GetNextFeedToFetch(context.Background())
 	if err != nil {
 		return err
 	}
-	fmt.Println(feedRSS)
+
+	err = s.db.MarkFeedFetched(context.Background(), feedData.ID)
+	if err != nil {
+		return err
+	}
+
+	feedRSS, err := fetchFeed(context.Background(), feedData.Url)
+	if err != nil {
+		return err
+	}
+
+	for _, item := range feedRSS.Channel.Item {
+		fmt.Printf("* %s\n", item.Title)
+	}
+
 	return nil
 }
 
