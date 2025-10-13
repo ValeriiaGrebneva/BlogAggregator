@@ -172,7 +172,8 @@ func scrapeFeeds(s *state) error {
 	}
 
 	for _, item := range feedRSS.Channel.Item {
-		fmt.Printf("* %s\n", item.Title)
+		post, err := s.db.CreatePost(context.Background(), database.CreatePostParams{uuid.New(), time.Now(), time.Now(), item.Title, item.Link, item.Description, item.PubDate, feedData.ID})
+		//continue here
 	}
 
 	return nil
