@@ -39,6 +39,7 @@ func main() {
 	commandsStruct.register("follow", middlewareLoggedIn(handlerFollow))
 	commandsStruct.register("following", middlewareLoggedIn(handlerFollowing))
 	commandsStruct.register("unfollow", middlewareLoggedIn(handlerUnfollow))
+	commandsStruct.register("browse", middlewareLoggedIn(handlerBrowse))
 
 	var args = os.Args
 	if len(args) < 2 {

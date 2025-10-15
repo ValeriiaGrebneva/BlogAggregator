@@ -2,13 +2,16 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/ValeriiaGrebneva/BlogAggregator/internal/config"
 	"github.com/ValeriiaGrebneva/BlogAggregator/internal/database"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type state struct {
@@ -151,7 +154,7 @@ func handlerAggregator(s *state, cmd command) error {
 			return err
 		}
 	}
-	
+
 	return nil
 }
 
@@ -172,8 +175,22 @@ func scrapeFeeds(s *state) error {
 	}
 
 	for _, item := range feedRSS.Channel.Item {
-		post, err := s.db.CreatePost(context.Background(), database.CreatePostParams{uuid.New(), time.Now(), time.Now(), item.Title, item.Link, item.Description, item.PubDate, feedData.ID})
-		//continue here
+		timePost, err := time.Parse(time.RFC1123Z, item.PubDate)
+		if err != nil {
+			return err
+		}
+		_, err = s.db.CreatePost(context.Background(), database.CreatePostParams{uuid.New(), time.Now(), time.Now(), item.Title, item.Link, sql.NullString{String: item.Description, Valid: true}, timePost, feedData.ID})
+		if err != nil {
+			pgErr, ok := err.(*pq.Error)
+			if ok {
+				if pgErr.Code != "23505" {
+					fmt.Printf("Error: %s\n", pgErr.Code)
+					os.Exit(1)
+				}
+			} else {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -296,6 +313,36 @@ func handlerUnfollow(s *state, cmd command, user database.User) error {
 	err = s.db.DeleteFeedFollow(context.Background(), database.DeleteFeedFollowParams{user.ID, feed.ID})
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func handlerBrowse(s *state, cmd command, user database.User) error {
+	lengthCommands := len(cmd.argumentsCommand)
+	if lengthCommands != 1 && lengthCommands != 0 {
+		return fmt.Errorf("Supposed to have 1 argument (limit of posts) or 0 arguments (default limit 2) in Browse command, not %d arguments", lengthCommands)
+	}
+
+	var err error
+	var limit int64
+	if lengthCommands == 1 {
+		limit, err = strconv.ParseInt(cmd.argumentsCommand[0], 10, 32)
+		if err != nil {
+			return err
+		}
+	} else {
+		limit = 2
+	}
+
+	posts, err := s.db.GetPostsForUser(context.Background(), database.GetPostsForUserParams{user.ID, int32(limit)})
+	if err != nil {
+		return err
+	}
+
+	for _, post := range posts {
+		fmt.Printf("Title: %s\n", post.Title)
+		fmt.Printf("Description: %s\n", post.Description)
 	}
 
 	return nil

@@ -12,10 +12,11 @@ VALUES (
 )
 RETURNING *;
 
--- name: GetPostsFromUser :many
-SELECT COUNT(p.*), p.*
+-- name: GetPostsForUser :many
+SELECT p.*
 FROM posts AS p
 INNER JOIN
 feeds AS f ON p.feed_id = f.id
 WHERE f.user_id = $1
-ORDER BY p.published_at DESC;
+ORDER BY p.published_at DESC
+LIMIT $2;
